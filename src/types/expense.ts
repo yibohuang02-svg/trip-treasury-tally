@@ -8,7 +8,7 @@ export type ExpenseCategory =
 
 export type PaymentSource = 'pool' | 'individual';
 
-export type CurrencyCode = 'USD' | 'EUR' | 'GBP' | 'JPY' | 'SGD' | 'AUD' | 'CAD' | 'THB' | 'MYR' | 'KRW';
+export type CurrencyCode = 'CNY' | 'USD' | 'EUR' | 'GBP' | 'JPY' | 'SGD' | 'AUD' | 'CAD' | 'THB' | 'MYR' | 'KRW';
 
 export interface Currency {
   code: CurrencyCode;
