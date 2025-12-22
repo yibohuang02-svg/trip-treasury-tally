@@ -19,7 +19,7 @@ interface TopUpDialogProps {
   currency: CurrencyCode;
 }
 
-const quickAmounts = [50, 100, 200, 500];
+const quickAmounts = [50, 200, 500, 1000];
 
 export function TopUpDialog({ onTopUp, currentBalance, currency }: TopUpDialogProps) {
   const [open, setOpen] = useState(false);
