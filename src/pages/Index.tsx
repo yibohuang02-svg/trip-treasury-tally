@@ -6,6 +6,7 @@ import { AddExpenseForm } from '@/components/AddExpenseForm';
 import { TopUpDialog } from '@/components/TopUpDialog';
 import { SettingsDialog } from '@/components/SettingsDialog';
 import { GroupMembersCard } from '@/components/GroupMembersCard';
+import { getCurrencySymbol } from '@/types/expense';
 
 const Index = () => {
   const {
@@ -21,8 +22,11 @@ const Index = () => {
     setThreshold,
     addGroupMember,
     removeGroupMember,
+    setCurrency,
     resetFund,
   } = useTravelFund();
+
+  const symbol = getCurrencySymbol(fund.currency);
 
   return (
     <div className="min-h-screen gradient-sunset">
@@ -40,7 +44,9 @@ const Index = () => {
           </div>
           <SettingsDialog 
             threshold={fund.lowBalanceThreshold}
+            currency={fund.currency}
             onSetThreshold={setThreshold}
+            onSetCurrency={setCurrency}
             onReset={resetFund}
           />
         </div>
@@ -55,6 +61,7 @@ const Index = () => {
             totalSpent={totalSpent}
             isLowBalance={isLowBalance}
             threshold={fund.lowBalanceThreshold}
+            currency={fund.currency}
           />
 
           {/* Pending Reimbursements Alert */}
@@ -67,7 +74,7 @@ const Index = () => {
                     {pendingReimbursements.length} pending reimbursement{pendingReimbursements.length > 1 ? 's' : ''}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Total: ${pendingReimbursements.reduce((sum, e) => sum + e.amount, 0).toFixed(2)} owed to members
+                    Total: {symbol}{pendingReimbursements.reduce((sum, e) => sum + e.amount, 0).toFixed(2)} owed to members
                   </p>
                 </div>
               </div>
@@ -83,8 +90,8 @@ const Index = () => {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 animate-slide-up" style={{ animationDelay: '100ms' }}>
-            <AddExpenseForm onAdd={addExpense} groupMembers={fund.groupMembers} />
-            <TopUpDialog onTopUp={topUpFund} currentBalance={currentBalance} />
+            <AddExpenseForm onAdd={addExpense} groupMembers={fund.groupMembers} currency={fund.currency} />
+            <TopUpDialog onTopUp={topUpFund} currentBalance={currentBalance} currency={fund.currency} />
           </div>
 
           {/* Expenses Section */}
@@ -101,6 +108,7 @@ const Index = () => {
             </div>
             <ExpenseList 
               expenses={fund.expenses} 
+              currency={fund.currency}
               onRemove={removeExpense} 
               onReimburse={reimburseExpense}
             />

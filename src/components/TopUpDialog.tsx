@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Wallet, Plus, Minus } from 'lucide-react';
+import { Wallet, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,18 +10,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { getCurrencySymbol, CurrencyCode } from '@/types/expense';
 import { toast } from 'sonner';
 
 interface TopUpDialogProps {
   onTopUp: (amount: number) => void;
   currentBalance: number;
+  currency: CurrencyCode;
 }
 
 const quickAmounts = [50, 100, 200, 500];
 
-export function TopUpDialog({ onTopUp, currentBalance }: TopUpDialogProps) {
+export function TopUpDialog({ onTopUp, currentBalance, currency }: TopUpDialogProps) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState('');
+  const symbol = getCurrencySymbol(currency);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +36,7 @@ export function TopUpDialog({ onTopUp, currentBalance }: TopUpDialogProps) {
     }
 
     onTopUp(parsedAmount);
-    toast.success(`Added $${parsedAmount.toFixed(2)} to the fund!`);
+    toast.success(`Added ${symbol}${parsedAmount.toFixed(2)} to the fund!`);
     setAmount('');
     setOpen(false);
   };
@@ -58,13 +61,13 @@ export function TopUpDialog({ onTopUp, currentBalance }: TopUpDialogProps) {
         <div className="mt-4 rounded-xl bg-muted p-4">
           <div className="text-sm text-muted-foreground">Current Balance</div>
           <div className="font-display text-2xl font-bold text-foreground">
-            ${currentBalance.toFixed(2)}
+            {symbol}{currentBalance.toFixed(2)}
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="topup-amount">Amount to add ($)</Label>
+            <Label htmlFor="topup-amount">Amount to add ({symbol})</Label>
             <Input
               id="topup-amount"
               type="number"
@@ -88,7 +91,7 @@ export function TopUpDialog({ onTopUp, currentBalance }: TopUpDialogProps) {
                   onClick={() => handleQuickAmount(qa)}
                   className="flex-1"
                 >
-                  ${qa}
+                  {symbol}{qa}
                 </Button>
               ))}
             </div>
