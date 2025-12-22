@@ -17,21 +17,23 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { ExpenseCategory, PaymentSource, categoryConfig } from '@/types/expense';
+import { ExpenseCategory, PaymentSource, categoryConfig, getCurrencySymbol, CurrencyCode } from '@/types/expense';
 import { toast } from 'sonner';
 
 interface AddExpenseFormProps {
   onAdd: (amount: number, description: string, category: ExpenseCategory, paidBy: string, paymentSource: PaymentSource) => void;
   groupMembers: string[];
+  currency: CurrencyCode;
 }
 
-export function AddExpenseForm({ onAdd, groupMembers }: AddExpenseFormProps) {
+export function AddExpenseForm({ onAdd, groupMembers, currency }: AddExpenseFormProps) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<ExpenseCategory>('food');
   const [paidBy, setPaidBy] = useState('');
   const [paymentSource, setPaymentSource] = useState<PaymentSource>('pool');
+  const symbol = getCurrencySymbol(currency);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,7 +80,7 @@ export function AddExpenseForm({ onAdd, groupMembers }: AddExpenseFormProps) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-5 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount ($)</Label>
+            <Label htmlFor="amount">Amount ({symbol})</Label>
             <Input
               id="amount"
               type="number"

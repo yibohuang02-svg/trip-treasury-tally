@@ -1,8 +1,15 @@
 import { useState } from 'react';
-import { Settings, AlertTriangle, RotateCcw } from 'lucide-react';
+import { Settings, AlertTriangle, RotateCcw, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -21,15 +28,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { CurrencyCode, currencies, getCurrencySymbol } from '@/types/expense';
 import { toast } from 'sonner';
 
 interface SettingsDialogProps {
   threshold: number;
+  currency: CurrencyCode;
   onSetThreshold: (threshold: number) => void;
+  onSetCurrency: (currency: CurrencyCode) => void;
   onReset: () => void;
 }
 
-export function SettingsDialog({ threshold, onSetThreshold, onReset }: SettingsDialogProps) {
+export function SettingsDialog({ threshold, currency, onSetThreshold, onSetCurrency, onReset }: SettingsDialogProps) {
   const [open, setOpen] = useState(false);
   const [newThreshold, setNewThreshold] = useState(threshold.toString());
 
@@ -50,6 +60,13 @@ export function SettingsDialog({ threshold, onSetThreshold, onReset }: SettingsD
     setOpen(false);
   };
 
+  const handleCurrencyChange = (value: CurrencyCode) => {
+    onSetCurrency(value);
+    toast.success(`Currency changed to ${value}`);
+  };
+
+  const currencySymbol = getCurrencySymbol(currency);
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -63,6 +80,29 @@ export function SettingsDialog({ threshold, onSetThreshold, onReset }: SettingsD
         </DialogHeader>
         
         <div className="space-y-6 mt-4">
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2">
+              <Globe className="h-4 w-4 text-primary" />
+              Currency
+            </Label>
+            <Select value={currency} onValueChange={(v) => handleCurrencyChange(v as CurrencyCode)}>
+              <SelectTrigger className="h-12">
+                <SelectValue placeholder="Select currency" />
+              </SelectTrigger>
+              <SelectContent>
+                {currencies.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    <span className="flex items-center gap-2">
+                      <span className="font-medium">{c.symbol}</span>
+                      <span>{c.name}</span>
+                      <span className="text-muted-foreground">({c.code})</span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-3">
             <Label htmlFor="threshold" className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-warning" />
@@ -79,7 +119,7 @@ export function SettingsDialog({ threshold, onSetThreshold, onReset }: SettingsD
               className="h-12"
             />
             <p className="text-sm text-muted-foreground">
-              You'll see a warning when your balance falls below this amount.
+              You'll see a warning when your balance falls below {currencySymbol}{threshold}.
             </p>
           </div>
 

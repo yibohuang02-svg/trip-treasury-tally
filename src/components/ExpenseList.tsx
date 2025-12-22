@@ -1,14 +1,17 @@
 import { Trash2, Check, Wallet, User } from 'lucide-react';
-import { Expense, categoryConfig } from '@/types/expense';
+import { Expense, categoryConfig, getCurrencySymbol, CurrencyCode } from '@/types/expense';
 import { Button } from '@/components/ui/button';
 
 interface ExpenseListProps {
   expenses: Expense[];
+  currency: CurrencyCode;
   onRemove: (id: string) => void;
   onReimburse: (id: string) => void;
 }
 
-export function ExpenseList({ expenses, onRemove, onReimburse }: ExpenseListProps) {
+export function ExpenseList({ expenses, currency, onRemove, onReimburse }: ExpenseListProps) {
+  const symbol = getCurrencySymbol(currency);
+
   if (expenses.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center animate-fade-in">
@@ -108,7 +111,7 @@ export function ExpenseList({ expenses, onRemove, onReimburse }: ExpenseListProp
 
             <div className="flex items-center gap-2">
               <span className="font-display text-lg font-bold text-foreground">
-                -${expense.amount.toFixed(2)}
+                -{symbol}{expense.amount.toFixed(2)}
               </span>
               
               {needsReimbursement && (

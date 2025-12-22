@@ -1,14 +1,17 @@
 import { Wallet, TrendingDown, AlertTriangle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { getCurrencySymbol, CurrencyCode } from '@/types/expense';
 
 interface BalanceCardProps {
   currentBalance: number;
   totalSpent: number;
   isLowBalance: boolean;
   threshold: number;
+  currency: CurrencyCode;
 }
 
-export function BalanceCard({ currentBalance, totalSpent, isLowBalance, threshold }: BalanceCardProps) {
+export function BalanceCard({ currentBalance, totalSpent, isLowBalance, threshold, currency }: BalanceCardProps) {
+  const symbol = getCurrencySymbol(currency);
+
   return (
     <div className="relative overflow-hidden rounded-2xl gradient-warm p-6 text-primary-foreground shadow-elevated animate-fade-in">
       {/* Background decoration */}
@@ -23,7 +26,7 @@ export function BalanceCard({ currentBalance, totalSpent, isLowBalance, threshol
         
         <div className="mt-2 flex items-baseline gap-1">
           <span className="text-4xl font-display font-bold tracking-tight">
-            ${currentBalance.toFixed(2)}
+            {symbol}{currentBalance.toFixed(2)}
           </span>
         </div>
 
@@ -31,7 +34,7 @@ export function BalanceCard({ currentBalance, totalSpent, isLowBalance, threshol
           <div className="mt-4 flex items-center gap-2 rounded-lg bg-primary-foreground/20 px-3 py-2 backdrop-blur-sm animate-pulse-soft">
             <AlertTriangle className="h-4 w-4" />
             <span className="text-sm font-medium">
-              Balance is below ${threshold} - Consider topping up!
+              Balance is below {symbol}{threshold} - Consider topping up!
             </span>
           </div>
         )}
@@ -39,7 +42,7 @@ export function BalanceCard({ currentBalance, totalSpent, isLowBalance, threshol
         <div className="mt-6 flex items-center gap-2 text-primary-foreground/70">
           <TrendingDown className="h-4 w-4" />
           <span className="text-sm">
-            Total spent: <span className="font-semibold text-primary-foreground">${totalSpent.toFixed(2)}</span>
+            Total spent: <span className="font-semibold text-primary-foreground">{symbol}{totalSpent.toFixed(2)}</span>
           </span>
         </div>
       </div>

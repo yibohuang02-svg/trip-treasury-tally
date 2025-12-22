@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Expense, TravelFund, ExpenseCategory, PaymentSource } from '@/types/expense';
+import { Expense, TravelFund, ExpenseCategory, PaymentSource, CurrencyCode } from '@/types/expense';
 
 const STORAGE_KEY = 'travel-fund-data';
 
@@ -10,6 +10,7 @@ const defaultFund: TravelFund = {
   lowBalanceThreshold: 100,
   expenses: [],
   groupMembers: [],
+  currency: 'USD',
 };
 
 export function useTravelFund() {
@@ -20,6 +21,7 @@ export function useTravelFund() {
       return {
         ...parsed,
         groupMembers: parsed.groupMembers || [],
+        currency: parsed.currency || 'USD',
         expenses: parsed.expenses.map((e: any) => ({
           ...e,
           date: new Date(e.date),
@@ -121,6 +123,13 @@ export function useTravelFund() {
     }));
   }, []);
 
+  const setCurrency = useCallback((currency: CurrencyCode) => {
+    setFund((prev) => ({
+      ...prev,
+      currency,
+    }));
+  }, []);
+
   const resetFund = useCallback(() => {
     setFund(defaultFund);
   }, []);
@@ -138,6 +147,7 @@ export function useTravelFund() {
     setThreshold,
     addGroupMember,
     removeGroupMember,
+    setCurrency,
     resetFund,
   };
 }
