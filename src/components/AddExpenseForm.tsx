@@ -17,19 +17,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { ExpenseCategory, categoryConfig } from '@/types/expense';
+import { ExpenseCategory, PaymentSource, categoryConfig } from '@/types/expense';
 import { toast } from 'sonner';
 
 interface AddExpenseFormProps {
-  onAdd: (amount: number, description: string, category: ExpenseCategory, paidBy: string) => void;
+  onAdd: (amount: number, description: string, category: ExpenseCategory, paidBy: string, paymentSource: PaymentSource) => void;
+  groupMembers: string[];
 }
 
-export function AddExpenseForm({ onAdd }: AddExpenseFormProps) {
+export function AddExpenseForm({ onAdd, groupMembers }: AddExpenseFormProps) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<ExpenseCategory>('food');
   const [paidBy, setPaidBy] = useState('');
+  const [paymentSource, setPaymentSource] = useState<PaymentSource>('pool');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,11 +48,11 @@ export function AddExpenseForm({ onAdd }: AddExpenseFormProps) {
     }
 
     if (!paidBy.trim()) {
-      toast.error('Please enter who paid');
+      toast.error('Please select or enter who paid');
       return;
     }
 
-    onAdd(parsedAmount, description.trim(), category, paidBy.trim());
+    onAdd(parsedAmount, description.trim(), category, paidBy.trim(), paymentSource);
     toast.success('Expense added successfully!');
     
     // Reset form
@@ -58,6 +60,7 @@ export function AddExpenseForm({ onAdd }: AddExpenseFormProps) {
     setDescription('');
     setCategory('food');
     setPaidBy('');
+    setPaymentSource('pool');
     setOpen(false);
   };
 
@@ -119,14 +122,60 @@ export function AddExpenseForm({ onAdd }: AddExpenseFormProps) {
           </div>
 
           <div className="space-y-2">
+            <Label>Payment Source</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setPaymentSource('pool')}
+                className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 transition-all ${
+                  paymentSource === 'pool'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-muted-foreground'
+                }`}
+              >
+                <span className="text-xl">💰</span>
+                <span className="text-sm font-medium">Pool Money</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentSource('individual')}
+                className={`flex flex-col items-center gap-1 rounded-xl border-2 p-3 transition-all ${
+                  paymentSource === 'individual'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-muted-foreground'
+                }`}
+              >
+                <span className="text-xl">👤</span>
+                <span className="text-sm font-medium">Paid by Individual</span>
+                <span className="text-xs text-muted-foreground">(Needs reimbursement)</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="paidBy">Paid by</Label>
-            <Input
-              id="paidBy"
-              placeholder="Who paid for this?"
-              value={paidBy}
-              onChange={(e) => setPaidBy(e.target.value)}
-              className="h-12"
-            />
+            {groupMembers.length > 0 ? (
+              <Select value={paidBy} onValueChange={setPaidBy}>
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Select who paid" />
+                </SelectTrigger>
+                <SelectContent>
+                  {groupMembers.map((member) => (
+                    <SelectItem key={member} value={member}>
+                      {member}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                id="paidBy"
+                placeholder="Who paid for this?"
+                value={paidBy}
+                onChange={(e) => setPaidBy(e.target.value)}
+                className="h-12"
+              />
+            )}
           </div>
 
           <Button type="submit" variant="gradient" className="w-full h-12 text-base">

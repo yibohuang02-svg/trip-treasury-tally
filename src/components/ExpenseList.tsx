@@ -1,14 +1,14 @@
-import { Trash2 } from 'lucide-react';
+import { Trash2, Check, Wallet, User } from 'lucide-react';
 import { Expense, categoryConfig } from '@/types/expense';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 interface ExpenseListProps {
   expenses: Expense[];
   onRemove: (id: string) => void;
+  onReimburse: (id: string) => void;
 }
 
-export function ExpenseList({ expenses, onRemove }: ExpenseListProps) {
+export function ExpenseList({ expenses, onRemove, onReimburse }: ExpenseListProps) {
   if (expenses.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center animate-fade-in">
@@ -34,10 +34,15 @@ export function ExpenseList({ expenses, onRemove }: ExpenseListProps) {
     <div className="space-y-3">
       {expenses.map((expense, index) => {
         const config = categoryConfig[expense.category];
+        const isIndividual = expense.paymentSource === 'individual';
+        const needsReimbursement = isIndividual && !expense.isReimbursed;
+
         return (
           <div
             key={expense.id}
-            className="group flex items-center gap-4 rounded-xl bg-card p-4 shadow-soft transition-all duration-200 hover:shadow-elevated animate-slide-up"
+            className={`group flex items-center gap-4 rounded-xl bg-card p-4 shadow-soft transition-all duration-200 hover:shadow-elevated animate-slide-up ${
+              needsReimbursement ? 'border-l-4 border-l-warning' : ''
+            }`}
             style={{ animationDelay: `${index * 50}ms` }}
           >
             <div 
@@ -48,7 +53,7 @@ export function ExpenseList({ expenses, onRemove }: ExpenseListProps) {
             </div>
             
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h4 className="font-medium text-card-foreground truncate">
                   {expense.description}
                 </h4>
@@ -61,18 +66,63 @@ export function ExpenseList({ expenses, onRemove }: ExpenseListProps) {
                 >
                   {config.label}
                 </span>
+                {isIndividual && (
+                  <span className={`shrink-0 flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                    expense.isReimbursed 
+                      ? 'bg-success/10 text-success' 
+                      : 'bg-warning/10 text-warning'
+                  }`}>
+                    {expense.isReimbursed ? (
+                      <>
+                        <Check className="h-3 w-3" />
+                        Reimbursed
+                      </>
+                    ) : (
+                      <>
+                        <User className="h-3 w-3" />
+                        Owes {expense.paidBy}
+                      </>
+                    )}
+                  </span>
+                )}
               </div>
-              <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                <span>Paid by {expense.paidBy}</span>
+              <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+                <span className="flex items-center gap-1">
+                  {expense.paymentSource === 'pool' ? (
+                    <Wallet className="h-3.5 w-3.5" />
+                  ) : (
+                    <User className="h-3.5 w-3.5" />
+                  )}
+                  {expense.paymentSource === 'pool' ? 'Pool' : `Paid by ${expense.paidBy}`}
+                </span>
                 <span>•</span>
                 <span>{formatDate(expense.date)}</span>
+                {expense.reimbursedAt && (
+                  <>
+                    <span>•</span>
+                    <span className="text-success">Reimbursed {formatDate(expense.reimbursedAt)}</span>
+                  </>
+                )}
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <span className="font-display text-lg font-bold text-foreground">
                 -${expense.amount.toFixed(2)}
               </span>
+              
+              {needsReimbursement && (
+                <Button
+                  variant="success"
+                  size="sm"
+                  onClick={() => onReimburse(expense.id)}
+                  className="h-8 px-3 text-xs"
+                >
+                  <Check className="h-3.5 w-3.5 mr-1" />
+                  Reimburse
+                </Button>
+              )}
+              
               <Button
                 variant="ghost"
                 size="icon"
