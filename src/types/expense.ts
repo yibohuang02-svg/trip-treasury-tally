@@ -8,7 +8,7 @@ export type ExpenseCategory =
 
 export type PaymentSource = 'pool' | 'individual';
 
-export type CurrencyCode = 'CNY' | 'USD' | 'EUR' | 'GBP' | 'JPY' | 'SGD' | 'AUD' | 'CAD' | 'THB' | 'MYR' | 'KRW';
+export type CurrencyCode = 'USD' | 'CNY' | 'EUR' | 'GBP' | 'JPY' | 'SGD' | 'AUD' | 'CAD' | 'THB' | 'MYR' | 'KRW';
 
 export interface Currency {
   code: CurrencyCode;
@@ -17,8 +17,8 @@ export interface Currency {
 }
 
 export const currencies: Currency[] = [
-  { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
   { code: 'USD', symbol: '$', name: 'US Dollar' },
+  { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
   { code: 'EUR', symbol: '€', name: 'Euro' },
   { code: 'GBP', symbol: '£', name: 'British Pound' },
   { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
