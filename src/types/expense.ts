@@ -6,6 +6,8 @@ export type ExpenseCategory =
   | 'shopping' 
   | 'other';
 
+export type PaymentSource = 'pool' | 'individual';
+
 export interface Expense {
   id: string;
   amount: number;
@@ -13,12 +15,16 @@ export interface Expense {
   category: ExpenseCategory;
   paidBy: string;
   date: Date;
+  paymentSource: PaymentSource;
+  isReimbursed: boolean;
+  reimbursedAt?: Date;
 }
 
 export interface TravelFund {
   totalBalance: number;
   lowBalanceThreshold: number;
   expenses: Expense[];
+  groupMembers: string[];
 }
 
 export const categoryConfig: Record<ExpenseCategory, { label: string; icon: string; color: string }> = {

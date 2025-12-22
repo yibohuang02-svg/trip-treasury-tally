@@ -5,6 +5,7 @@ import { ExpenseList } from '@/components/ExpenseList';
 import { AddExpenseForm } from '@/components/AddExpenseForm';
 import { TopUpDialog } from '@/components/TopUpDialog';
 import { SettingsDialog } from '@/components/SettingsDialog';
+import { GroupMembersCard } from '@/components/GroupMembersCard';
 
 const Index = () => {
   const {
@@ -12,10 +13,14 @@ const Index = () => {
     currentBalance,
     isLowBalance,
     totalSpent,
+    pendingReimbursements,
     addExpense,
     removeExpense,
+    reimburseExpense,
     topUpFund,
     setThreshold,
+    addGroupMember,
+    removeGroupMember,
     resetFund,
   } = useTravelFund();
 
@@ -52,9 +57,33 @@ const Index = () => {
             threshold={fund.lowBalanceThreshold}
           />
 
+          {/* Pending Reimbursements Alert */}
+          {pendingReimbursements.length > 0 && (
+            <div className="rounded-xl bg-warning/10 border border-warning/20 p-4 animate-fade-in">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">💸</span>
+                <div>
+                  <p className="font-medium text-warning">
+                    {pendingReimbursements.length} pending reimbursement{pendingReimbursements.length > 1 ? 's' : ''}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Total: ${pendingReimbursements.reduce((sum, e) => sum + e.amount, 0).toFixed(2)} owed to members
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Group Members */}
+          <GroupMembersCard
+            members={fund.groupMembers}
+            onAddMember={addGroupMember}
+            onRemoveMember={removeGroupMember}
+          />
+
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 animate-slide-up" style={{ animationDelay: '100ms' }}>
-            <AddExpenseForm onAdd={addExpense} />
+            <AddExpenseForm onAdd={addExpense} groupMembers={fund.groupMembers} />
             <TopUpDialog onTopUp={topUpFund} currentBalance={currentBalance} />
           </div>
 
@@ -70,7 +99,11 @@ const Index = () => {
                 </span>
               )}
             </div>
-            <ExpenseList expenses={fund.expenses} onRemove={removeExpense} />
+            <ExpenseList 
+              expenses={fund.expenses} 
+              onRemove={removeExpense} 
+              onReimburse={reimburseExpense}
+            />
           </div>
         </div>
       </main>

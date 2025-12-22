@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Expense, TravelFund, ExpenseCategory } from '@/types/expense';
+import { Expense, TravelFund, ExpenseCategory, PaymentSource } from '@/types/expense';
 
 const STORAGE_KEY = 'travel-fund-data';
 
@@ -9,6 +9,7 @@ const defaultFund: TravelFund = {
   totalBalance: 0,
   lowBalanceThreshold: 100,
   expenses: [],
+  groupMembers: [],
 };
 
 export function useTravelFund() {
@@ -18,9 +19,13 @@ export function useTravelFund() {
       const parsed = JSON.parse(saved);
       return {
         ...parsed,
+        groupMembers: parsed.groupMembers || [],
         expenses: parsed.expenses.map((e: any) => ({
           ...e,
           date: new Date(e.date),
+          reimbursedAt: e.reimbursedAt ? new Date(e.reimbursedAt) : undefined,
+          paymentSource: e.paymentSource || 'pool',
+          isReimbursed: e.isReimbursed || false,
         })),
       };
     }
@@ -31,15 +36,27 @@ export function useTravelFund() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(fund));
   }, [fund]);
 
-  const currentBalance = fund.totalBalance - fund.expenses.reduce((sum, e) => sum + e.amount, 0);
+  // Only count pool expenses and reimbursed individual expenses
+  const spentFromPool = fund.expenses.reduce((sum, e) => {
+    if (e.paymentSource === 'pool') return sum + e.amount;
+    if (e.paymentSource === 'individual' && e.isReimbursed) return sum + e.amount;
+    return sum;
+  }, 0);
+
+  const currentBalance = fund.totalBalance - spentFromPool;
   const isLowBalance = currentBalance <= fund.lowBalanceThreshold;
   const totalSpent = fund.expenses.reduce((sum, e) => sum + e.amount, 0);
+
+  const pendingReimbursements = fund.expenses.filter(
+    (e) => e.paymentSource === 'individual' && !e.isReimbursed
+  );
 
   const addExpense = useCallback((
     amount: number,
     description: string,
     category: ExpenseCategory,
-    paidBy: string
+    paidBy: string,
+    paymentSource: PaymentSource
   ) => {
     const newExpense: Expense = {
       id: generateId(),
@@ -48,6 +65,8 @@ export function useTravelFund() {
       category,
       paidBy,
       date: new Date(),
+      paymentSource,
+      isReimbursed: false,
     };
 
     setFund((prev) => ({
@@ -60,6 +79,17 @@ export function useTravelFund() {
     setFund((prev) => ({
       ...prev,
       expenses: prev.expenses.filter((e) => e.id !== id),
+    }));
+  }, []);
+
+  const reimburseExpense = useCallback((id: string) => {
+    setFund((prev) => ({
+      ...prev,
+      expenses: prev.expenses.map((e) =>
+        e.id === id
+          ? { ...e, isReimbursed: true, reimbursedAt: new Date() }
+          : e
+      ),
     }));
   }, []);
 
@@ -77,6 +107,20 @@ export function useTravelFund() {
     }));
   }, []);
 
+  const addGroupMember = useCallback((name: string) => {
+    setFund((prev) => ({
+      ...prev,
+      groupMembers: [...prev.groupMembers, name],
+    }));
+  }, []);
+
+  const removeGroupMember = useCallback((name: string) => {
+    setFund((prev) => ({
+      ...prev,
+      groupMembers: prev.groupMembers.filter((m) => m !== name),
+    }));
+  }, []);
+
   const resetFund = useCallback(() => {
     setFund(defaultFund);
   }, []);
@@ -86,10 +130,14 @@ export function useTravelFund() {
     currentBalance,
     isLowBalance,
     totalSpent,
+    pendingReimbursements,
     addExpense,
     removeExpense,
+    reimburseExpense,
     topUpFund,
     setThreshold,
+    addGroupMember,
+    removeGroupMember,
     resetFund,
   };
 }
