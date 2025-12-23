@@ -42,10 +42,19 @@ export interface Expense {
   reimbursedAt?: Date;
 }
 
+export interface TopUp {
+  id: string;
+  amount: number;
+  date: Date;
+  addedBy: string;
+  note?: string;
+}
+
 export interface TravelFund {
   totalBalance: number;
   lowBalanceThreshold: number;
   expenses: Expense[];
+  topUps: TopUp[];
   groupMembers: string[];
   currency: CurrencyCode;
 }

@@ -1,12 +1,17 @@
-import { Plane } from 'lucide-react';
+import { Plane, Download } from 'lucide-react';
 import { useTravelFund } from '@/hooks/useTravelFund';
 import { BalanceCard } from '@/components/BalanceCard';
 import { ExpenseList } from '@/components/ExpenseList';
 import { AddExpenseForm } from '@/components/AddExpenseForm';
 import { TopUpDialog } from '@/components/TopUpDialog';
+import { TopUpHistory } from '@/components/TopUpHistory';
 import { SettingsDialog } from '@/components/SettingsDialog';
 import { GroupMembersCard } from '@/components/GroupMembersCard';
 import { getCurrencySymbol } from '@/types/expense';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { exportToExcel } from '@/lib/exportToExcel';
+import { toast } from 'sonner';
 
 const Index = () => {
   const {
@@ -28,6 +33,17 @@ const Index = () => {
 
   const symbol = getCurrencySymbol(fund.currency);
 
+  const handleExport = () => {
+    exportToExcel({
+      expenses: fund.expenses,
+      topUps: fund.topUps,
+      currency: fund.currency,
+      totalBalance: currentBalance,
+      groupMembers: fund.groupMembers,
+    });
+    toast.success('Excel file downloaded!');
+  };
+
   return (
     <div className="min-h-screen gradient-sunset">
       {/* Header */}
@@ -42,13 +58,23 @@ const Index = () => {
               <p className="text-xs text-muted-foreground">Group expense tracker</p>
             </div>
           </div>
-          <SettingsDialog 
-            threshold={fund.lowBalanceThreshold}
-            currency={fund.currency}
-            onSetThreshold={setThreshold}
-            onSetCurrency={setCurrency}
-            onReset={resetFund}
-          />
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={handleExport}
+              title="Export to Excel"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+            <SettingsDialog 
+              threshold={fund.lowBalanceThreshold}
+              currency={fund.currency}
+              onSetThreshold={setThreshold}
+              onSetCurrency={setCurrency}
+              onReset={resetFund}
+            />
+          </div>
         </div>
       </header>
 
@@ -91,27 +117,42 @@ const Index = () => {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 animate-slide-up" style={{ animationDelay: '100ms' }}>
             <AddExpenseForm onAdd={addExpense} groupMembers={fund.groupMembers} currency={fund.currency} />
-            <TopUpDialog onTopUp={topUpFund} currentBalance={currentBalance} currency={fund.currency} />
+            <TopUpDialog 
+              onTopUp={topUpFund} 
+              currentBalance={currentBalance} 
+              currency={fund.currency}
+              groupMembers={fund.groupMembers}
+            />
           </div>
 
-          {/* Expenses Section */}
+          {/* Transactions Section with Tabs */}
           <div className="animate-slide-up" style={{ animationDelay: '200ms' }}>
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-display text-xl font-semibold text-foreground">
-                Recent Expenses
-              </h2>
-              {fund.expenses.length > 0 && (
-                <span className="rounded-full bg-muted px-3 py-1 text-sm font-medium text-muted-foreground">
-                  {fund.expenses.length} {fund.expenses.length === 1 ? 'expense' : 'expenses'}
-                </span>
-              )}
-            </div>
-            <ExpenseList 
-              expenses={fund.expenses} 
-              currency={fund.currency}
-              onRemove={removeExpense} 
-              onReimburse={reimburseExpense}
-            />
+            <Tabs defaultValue="expenses" className="w-full">
+              <TabsList className="w-full mb-4">
+                <TabsTrigger value="expenses" className="flex-1">
+                  Expenses ({fund.expenses.length})
+                </TabsTrigger>
+                <TabsTrigger value="topups" className="flex-1">
+                  Top-ups ({fund.topUps.length})
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="expenses">
+                <ExpenseList 
+                  expenses={fund.expenses} 
+                  currency={fund.currency}
+                  onRemove={removeExpense} 
+                  onReimburse={reimburseExpense}
+                />
+              </TabsContent>
+              
+              <TabsContent value="topups">
+                <TopUpHistory 
+                  topUps={fund.topUps}
+                  currency={fund.currency}
+                />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </main>
