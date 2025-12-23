@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Expense, TravelFund, ExpenseCategory, PaymentSource, CurrencyCode } from '@/types/expense';
+import { Expense, TravelFund, ExpenseCategory, PaymentSource, CurrencyCode, TopUp } from '@/types/expense';
 
 const STORAGE_KEY = 'travel-fund-data';
 
@@ -9,6 +9,7 @@ const defaultFund: TravelFund = {
   totalBalance: 0,
   lowBalanceThreshold: 100,
   expenses: [],
+  topUps: [],
   groupMembers: [],
   currency: 'USD',
 };
@@ -22,6 +23,10 @@ export function useTravelFund() {
         ...parsed,
         groupMembers: parsed.groupMembers || [],
         currency: parsed.currency || 'USD',
+        topUps: (parsed.topUps || []).map((t: any) => ({
+          ...t,
+          date: new Date(t.date),
+        })),
         expenses: parsed.expenses.map((e: any) => ({
           ...e,
           date: new Date(e.date),
@@ -95,10 +100,19 @@ export function useTravelFund() {
     }));
   }, []);
 
-  const topUpFund = useCallback((amount: number) => {
+  const topUpFund = useCallback((amount: number, addedBy: string = 'Unknown', note?: string) => {
+    const newTopUp: TopUp = {
+      id: generateId(),
+      amount,
+      date: new Date(),
+      addedBy,
+      note,
+    };
+
     setFund((prev) => ({
       ...prev,
       totalBalance: prev.totalBalance + amount,
+      topUps: [newTopUp, ...prev.topUps],
     }));
   }, []);
 

@@ -10,20 +10,30 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { getCurrencySymbol, CurrencyCode } from '@/types/expense';
 import { toast } from 'sonner';
 
 interface TopUpDialogProps {
-  onTopUp: (amount: number) => void;
+  onTopUp: (amount: number, addedBy: string, note?: string) => void;
   currentBalance: number;
   currency: CurrencyCode;
+  groupMembers: string[];
 }
 
 const quickAmounts = [50, 200, 500, 1000];
 
-export function TopUpDialog({ onTopUp, currentBalance, currency }: TopUpDialogProps) {
+export function TopUpDialog({ onTopUp, currentBalance, currency, groupMembers }: TopUpDialogProps) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState('');
+  const [addedBy, setAddedBy] = useState('');
+  const [note, setNote] = useState('');
   const symbol = getCurrencySymbol(currency);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -35,9 +45,16 @@ export function TopUpDialog({ onTopUp, currentBalance, currency }: TopUpDialogPr
       return;
     }
 
-    onTopUp(parsedAmount);
+    if (!addedBy.trim()) {
+      toast.error('Please select who added the funds');
+      return;
+    }
+
+    onTopUp(parsedAmount, addedBy.trim(), note.trim() || undefined);
     toast.success(`Added ${symbol}${parsedAmount.toFixed(2)} to the fund!`);
     setAmount('');
+    setAddedBy('');
+    setNote('');
     setOpen(false);
   };
 
@@ -95,6 +112,37 @@ export function TopUpDialog({ onTopUp, currentBalance, currency }: TopUpDialogPr
                 </Button>
               ))}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="added-by">Added by</Label>
+            <Select value={addedBy} onValueChange={setAddedBy}>
+              <SelectTrigger className="h-12">
+                <SelectValue placeholder="Select who added the funds" />
+              </SelectTrigger>
+              <SelectContent>
+                {groupMembers.length > 0 ? (
+                  groupMembers.map((member) => (
+                    <SelectItem key={member} value={member}>
+                      {member}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="unknown">Unknown</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="note">Note (optional)</Label>
+            <Input
+              id="note"
+              placeholder="e.g., Day 1 contribution"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              className="h-12"
+            />
           </div>
 
           <Button type="submit" variant="success" className="w-full h-12 text-base">
