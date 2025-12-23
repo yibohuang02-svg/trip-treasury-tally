@@ -20,9 +20,11 @@ const Index = () => {
     isLowBalance,
     totalSpent,
     pendingReimbursements,
+    memberBalances,
     addExpense,
     removeExpense,
     reimburseExpense,
+    reimburseMember,
     topUpFund,
     setThreshold,
     addGroupMember,
@@ -110,8 +112,11 @@ const Index = () => {
           {/* Group Members */}
           <GroupMembersCard
             members={fund.groupMembers}
+            memberBalances={memberBalances}
+            currency={fund.currency}
             onAddMember={addGroupMember}
             onRemoveMember={removeGroupMember}
+            onReimburseMember={reimburseMember}
           />
 
           {/* Action Buttons */}

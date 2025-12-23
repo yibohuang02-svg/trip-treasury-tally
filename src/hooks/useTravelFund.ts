@@ -100,6 +100,17 @@ export function useTravelFund() {
     }));
   }, []);
 
+  const reimburseMember = useCallback((memberName: string) => {
+    setFund((prev) => ({
+      ...prev,
+      expenses: prev.expenses.map((e) =>
+        e.paymentSource === 'individual' && e.paidBy === memberName && !e.isReimbursed
+          ? { ...e, isReimbursed: true, reimbursedAt: new Date() }
+          : e
+      ),
+    }));
+  }, []);
+
   const topUpFund = useCallback((amount: number, addedBy: string = 'Unknown', note?: string) => {
     const newTopUp: TopUp = {
       id: generateId(),
@@ -148,15 +159,26 @@ export function useTravelFund() {
     setFund(defaultFund);
   }, []);
 
+  // Calculate amount owed to each member
+  const memberBalances = fund.groupMembers.reduce((acc, member) => {
+    const owedAmount = fund.expenses
+      .filter((e) => e.paymentSource === 'individual' && e.paidBy === member && !e.isReimbursed)
+      .reduce((sum, e) => sum + e.amount, 0);
+    acc[member] = owedAmount;
+    return acc;
+  }, {} as Record<string, number>);
+
   return {
     fund,
     currentBalance,
     isLowBalance,
     totalSpent,
     pendingReimbursements,
+    memberBalances,
     addExpense,
     removeExpense,
     reimburseExpense,
+    reimburseMember,
     topUpFund,
     setThreshold,
     addGroupMember,
