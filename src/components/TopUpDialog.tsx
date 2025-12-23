@@ -65,31 +65,32 @@ export function TopUpDialog({ onTopUp, currentBalance, currency, groupMembers }:
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="success" size="lg" className="w-full sm:w-auto">
+        <Button variant="success" size="lg" className="w-full h-12 sm:h-11 text-sm sm:text-base">
           <Wallet className="h-5 w-5" />
-          Top Up Fund
+          <span>Top Up</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md mx-3 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-display text-xl">Top Up Travel Fund</DialogTitle>
+          <DialogTitle className="font-display text-lg sm:text-xl">Top Up Travel Fund</DialogTitle>
         </DialogHeader>
         
-        <div className="mt-4 rounded-xl bg-muted p-4">
-          <div className="text-sm text-muted-foreground">Current Balance</div>
-          <div className="font-display text-2xl font-bold text-foreground">
+        <div className="mt-3 sm:mt-4 rounded-xl bg-muted p-3 sm:p-4">
+          <div className="text-xs sm:text-sm text-muted-foreground">Current Balance</div>
+          <div className="font-display text-xl sm:text-2xl font-bold text-foreground">
             {symbol}{currentBalance.toFixed(2)}
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5 mt-4">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 mt-3 sm:mt-4">
           <div className="space-y-2">
-            <Label htmlFor="topup-amount">Amount to add ({symbol})</Label>
+            <Label htmlFor="topup-amount" className="text-sm">Amount to add ({symbol})</Label>
             <Input
               id="topup-amount"
               type="number"
               step="0.01"
               min="0"
+              inputMode="decimal"
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
@@ -98,15 +99,15 @@ export function TopUpDialog({ onTopUp, currentBalance, currency, groupMembers }:
           </div>
 
           <div className="space-y-2">
-            <Label>Quick amounts</Label>
-            <div className="flex flex-wrap gap-2">
+            <Label className="text-sm">Quick amounts</Label>
+            <div className="grid grid-cols-4 gap-2">
               {quickAmounts.map((qa) => (
                 <Button
                   key={qa}
                   type="button"
                   variant="outline"
                   onClick={() => handleQuickAmount(qa)}
-                  className="flex-1"
+                  className="h-11 text-sm px-2"
                 >
                   {symbol}{qa}
                 </Button>
@@ -115,33 +116,33 @@ export function TopUpDialog({ onTopUp, currentBalance, currency, groupMembers }:
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="added-by">Added by</Label>
+            <Label htmlFor="added-by" className="text-sm">Added by</Label>
             <Select value={addedBy} onValueChange={setAddedBy}>
               <SelectTrigger className="h-12">
                 <SelectValue placeholder="Select who added the funds" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-popover">
                 {groupMembers.length > 0 ? (
                   groupMembers.map((member) => (
-                    <SelectItem key={member} value={member}>
+                    <SelectItem key={member} value={member} className="py-3">
                       {member}
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem value="unknown">Unknown</SelectItem>
+                  <SelectItem value="unknown" className="py-3">Unknown</SelectItem>
                 )}
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="note">Note (optional)</Label>
+            <Label htmlFor="note" className="text-sm">Note (optional)</Label>
             <Input
               id="note"
               placeholder="e.g., Day 1 contribution"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="h-12"
+              className="h-12 text-base"
             />
           </div>
 

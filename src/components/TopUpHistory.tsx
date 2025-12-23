@@ -11,10 +11,10 @@ export function TopUpHistory({ topUps, currency }: TopUpHistoryProps) {
 
   if (topUps.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-center animate-fade-in">
-        <div className="mb-4 text-4xl">💰</div>
-        <h3 className="font-display text-lg font-semibold text-foreground">No top-ups yet</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
+      <div className="flex flex-col items-center justify-center py-8 sm:py-10 text-center animate-fade-in">
+        <div className="mb-3 sm:mb-4 text-4xl sm:text-5xl">💰</div>
+        <h3 className="font-display text-base sm:text-lg font-semibold text-foreground">No top-ups yet</h3>
+        <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
           Add funds to start tracking contributions
         </p>
       </div>
@@ -30,43 +30,50 @@ export function TopUpHistory({ topUps, currency }: TopUpHistoryProps) {
     }).format(date);
   };
 
+  const formatDateShort = (date: Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+    }).format(date);
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-2 sm:space-y-3">
       {topUps.map((topUp, index) => (
         <div
           key={topUp.id}
-          className="group flex items-center gap-4 rounded-xl bg-card p-4 shadow-soft transition-all duration-200 hover:shadow-elevated animate-slide-up border-l-4 border-l-success"
+          className="group flex items-center gap-3 sm:gap-4 rounded-xl bg-card p-3 sm:p-4 shadow-soft transition-all duration-200 hover:shadow-elevated animate-slide-up border-l-4 border-l-success"
           style={{ animationDelay: `${index * 50}ms` }}
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-success/20 text-2xl">
-            <Wallet className="h-6 w-6 text-success" />
+          <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-success/20">
+            <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
           </div>
           
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h4 className="font-medium text-card-foreground">
-                Fund Top-up
-              </h4>
-              {topUp.note && (
-                <span className="text-sm text-muted-foreground truncate">
-                  — {topUp.note}
-                </span>
-              )}
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <h4 className="font-medium text-card-foreground text-sm sm:text-base">
+                  Fund Top-up
+                </h4>
+                {topUp.note && (
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate mt-0.5">
+                    {topUp.note}
+                  </p>
+                )}
+              </div>
+              <span className="font-display text-base sm:text-lg font-bold text-success shrink-0">
+                +{symbol}{topUp.amount.toFixed(2)}
+              </span>
             </div>
-            <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+            <div className="mt-1.5 flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
-                <User className="h-3.5 w-3.5" />
+                <User className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                 {topUp.addedBy}
               </span>
-              <span>•</span>
-              <span>{formatDate(topUp.date)}</span>
+              <span className="text-muted-foreground/50">•</span>
+              <span className="hidden sm:inline">{formatDate(topUp.date)}</span>
+              <span className="sm:hidden">{formatDateShort(topUp.date)}</span>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="font-display text-lg font-bold text-success">
-              +{symbol}{topUp.amount.toFixed(2)}
-            </span>
           </div>
         </div>
       ))}
