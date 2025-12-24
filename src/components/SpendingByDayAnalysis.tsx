@@ -1,394 +1,181 @@
 import React, { useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import Card from './Card';
 
 interface DailySpending {
   date: string;
+  day: string;
   amount: number;
-  count: number;
-  average: number;
-}
-
-interface SpendingEntry {
-  date: string;
-  amount: number;
+  transactionCount: number;
+  categoryBreakdown: Record<string, number>;
 }
 
 interface SpendingByDayAnalysisProps {
-  data: SpendingEntry[];
-  title?: string;
-  showAverage?: boolean;
-  showTrendLine?: boolean;
+  transactions?: Array<{
+    date: string;
+    amount: number;
+    category?: string;
+  }>;
+  isLoading?: boolean;
+  currency?: string;
 }
 
-/**
- * SpendingByDayAnalysis Component
- * 
- * Analyzes and visualizes daily spending patterns with multiple views:
- * - Daily total spending amounts
- * - Number of transactions per day
- * - Average spending per transaction
- * - Spending trends over time
- */
 const SpendingByDayAnalysis: React.FC<SpendingByDayAnalysisProps> = ({
-  data,
-  title = 'Daily Spending Analysis',
-  showAverage = true,
-  showTrendLine = true,
+  transactions = [],
+  isLoading = false,
+  currency = '$',
 }) => {
-  // Calculate daily statistics
-  const dailyStats = useMemo(() => {
-    const groupedByDate: { [key: string]: number[] } = {};
+  const dailySpending = useMemo(() => {
+    if (!transactions.length) return [];
 
-    // Group spending by date
-    data.forEach((entry) => {
-      if (!groupedByDate[entry.date]) {
-        groupedByDate[entry.date] = [];
+    const grouped: Record<string, DailySpending> = {};
+
+    transactions.forEach((transaction) => {
+      if (!grouped[transaction.date]) {
+        const date = new Date(transaction.date);
+        grouped[transaction.date] = {
+          date: transaction.date,
+          day: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+          amount: 0,
+          transactionCount: 0,
+          categoryBreakdown: {},
+        };
       }
-      groupedByDate[entry.date].push(entry.amount);
+
+      grouped[transaction.date].amount += transaction.amount;
+      grouped[transaction.date].transactionCount += 1;
+
+      if (transaction.category) {
+        grouped[transaction.date].categoryBreakdown[transaction.category] =
+          (grouped[transaction.date].categoryBreakdown[transaction.category] || 0) + transaction.amount;
+      }
     });
 
-    // Calculate daily aggregates
-    const stats: DailySpending[] = Object.entries(groupedByDate)
-      .map(([date, amounts]) => ({
-        date,
-        amount: amounts.reduce((sum, amt) => sum + amt, 0),
-        count: amounts.length,
-        average: amounts.reduce((sum, amt) => sum + amt, 0) / amounts.length,
-      }))
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return Object.values(grouped).sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+  }, [transactions]);
 
-    return stats;
-  }, [data]);
+  const totalSpending = useMemo(
+    () => dailySpending.reduce((sum, day) => sum + day.amount, 0),
+    [dailySpending]
+  );
 
-  // Calculate overall statistics
-  const overallStats = useMemo(() => {
-    const totalSpending = dailyStats.reduce((sum, day) => sum + day.amount, 0);
-    const averageDailySpending = dailyStats.length > 0 ? totalSpending / dailyStats.length : 0;
-    const highestSpendingDay = dailyStats.length > 0 
-      ? dailyStats.reduce((max, day) => day.amount > max.amount ? day : max)
-      : null;
-    const lowestSpendingDay = dailyStats.length > 0
-      ? dailyStats.reduce((min, day) => day.amount < min.amount ? day : min)
-      : null;
+  const averageSpending = dailySpending.length > 0 ? totalSpending / dailySpending.length : 0;
 
-    return {
-      totalSpending,
-      averageDailySpending,
-      highestSpendingDay,
-      lowestSpendingDay,
-      totalDays: dailyStats.length,
-      totalTransactions: data.length,
-    };
-  }, [dailyStats, data]);
+  const maxSpendingDay = useMemo(
+    () => dailySpending.reduce((max, day) => (day.amount > max.amount ? day : max), dailySpending[0]),
+    [dailySpending]
+  );
 
-  if (dailyStats.length === 0) {
+  const getSpendingColor = (amount: number, max: number) => {
+    const ratio = amount / max;
+    if (ratio > 0.75) return 'bg-red-100 border-l-4 border-red-500';
+    if (ratio > 0.5) return 'bg-orange-100 border-l-4 border-orange-500';
+    if (ratio > 0.25) return 'bg-yellow-100 border-l-4 border-yellow-500';
+    return 'bg-green-100 border-l-4 border-green-500';
+  };
+
+  if (isLoading) {
     return (
-      <div className="spending-by-day-analysis">
-        <h2>{title}</h2>
-        <p className="no-data">No spending data available for analysis.</p>
-      </div>
+      <Card className="p-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-20 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  if (!dailySpending.length) {
+    return (
+      <Card className="p-6">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Spending by Day</h2>
+        <div className="text-center text-gray-500 py-8">
+          <p>No transaction data available</p>
+        </div>
+      </Card>
     );
   }
 
   return (
-    <div className="spending-by-day-analysis">
-      <h2>{title}</h2>
+    <Card className="p-6">
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Spending by Day</h2>
 
-      {/* Statistics Summary Cards */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <h3>Total Spending</h3>
-          <p className="stat-value">${overallStats.totalSpending.toFixed(2)}</p>
-        </div>
-        <div className="stat-card">
-          <h3>Average Daily Spending</h3>
-          <p className="stat-value">${overallStats.averageDailySpending.toFixed(2)}</p>
-        </div>
-        <div className="stat-card">
-          <h3>Total Days</h3>
-          <p className="stat-value">{overallStats.totalDays}</p>
-        </div>
-        <div className="stat-card">
-          <h3>Total Transactions</h3>
-          <p className="stat-value">{overallStats.totalTransactions}</p>
-        </div>
-        {overallStats.highestSpendingDay && (
-          <div className="stat-card highlight-high">
-            <h3>Highest Spending Day</h3>
-            <p className="stat-value">${overallStats.highestSpendingDay.amount.toFixed(2)}</p>
-            <p className="stat-detail">{overallStats.highestSpendingDay.date}</p>
+        {/* Summary Statistics */}
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <p className="text-sm text-gray-600 mb-1">Total Spending</p>
+            <p className="text-2xl font-bold text-blue-600">
+              {currency}{totalSpending.toFixed(2)}
+            </p>
           </div>
-        )}
-        {overallStats.lowestSpendingDay && (
-          <div className="stat-card highlight-low">
-            <h3>Lowest Spending Day</h3>
-            <p className="stat-value">${overallStats.lowestSpendingDay.amount.toFixed(2)}</p>
-            <p className="stat-detail">{overallStats.lowestSpendingDay.date}</p>
+          <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+            <p className="text-sm text-gray-600 mb-1">Average per Day</p>
+            <p className="text-2xl font-bold text-purple-600">
+              {currency}{averageSpending.toFixed(2)}
+            </p>
           </div>
-        )}
-      </div>
-
-      {/* Daily Spending Bar Chart */}
-      <div className="chart-container">
-        <h3>Daily Spending Amounts</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={dailyStats} margin={{ top: 20, right: 30, left: 0, bottom: 60 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey="date" 
-              angle={-45} 
-              textAnchor="end" 
-              height={100}
-              tick={{ fontSize: 12 }}
-            />
-            <YAxis label={{ value: 'Amount ($)', angle: -90, position: 'insideLeft' }} />
-            <Tooltip 
-              formatter={(value: number) => `$${value.toFixed(2)}`}
-              labelFormatter={(label) => `Date: ${label}`}
-            />
-            <Bar dataKey="amount" fill="#8884d8" radius={[8, 8, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Transaction Count Chart */}
-      <div className="chart-container">
-        <h3>Transactions Per Day</h3>
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={dailyStats} margin={{ top: 20, right: 30, left: 0, bottom: 60 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey="date" 
-              angle={-45} 
-              textAnchor="end" 
-              height={100}
-              tick={{ fontSize: 12 }}
-            />
-            <YAxis label={{ value: 'Count', angle: -90, position: 'insideLeft' }} />
-            <Tooltip 
-              labelFormatter={(label) => `Date: ${label}`}
-            />
-            <Bar dataKey="count" fill="#82ca9d" radius={[8, 8, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Average Spending Per Transaction */}
-      {showAverage && (
-        <div className="chart-container">
-          <h3>Average Spending Per Transaction</h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={dailyStats} margin={{ top: 20, right: 30, left: 0, bottom: 60 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="date" 
-                angle={-45} 
-                textAnchor="end" 
-                height={100}
-                tick={{ fontSize: 12 }}
-              />
-              <YAxis label={{ value: 'Average ($)', angle: -90, position: 'insideLeft' }} />
-              <Tooltip 
-                formatter={(value: number) => `$${value.toFixed(2)}`}
-                labelFormatter={(label) => `Date: ${label}`}
-              />
-              <Bar dataKey="average" fill="#ffc658" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+            <p className="text-sm text-gray-600 mb-1">Highest Day</p>
+            <p className="text-2xl font-bold text-indigo-600">
+              {currency}{maxSpendingDay.amount.toFixed(2)}
+            </p>
+          </div>
         </div>
-      )}
-
-      {/* Spending Trend Line */}
-      {showTrendLine && (
-        <div className="chart-container">
-          <h3>Spending Trend Over Time</h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={dailyStats} margin={{ top: 20, right: 30, left: 0, bottom: 60 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="date" 
-                angle={-45} 
-                textAnchor="end" 
-                height={100}
-                tick={{ fontSize: 12 }}
-              />
-              <YAxis label={{ value: 'Amount ($)', angle: -90, position: 'insideLeft' }} />
-              <Tooltip 
-                formatter={(value: number) => `$${value.toFixed(2)}`}
-                labelFormatter={(label) => `Date: ${label}`}
-              />
-              <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="amount" 
-                stroke="#8884d8" 
-                dot={{ fill: '#8884d8', r: 4 }}
-                name="Daily Spending"
-              />
-              <Line 
-                type="monotone" 
-                dataKey="average" 
-                stroke="#ffc658" 
-                dot={{ fill: '#ffc658', r: 3 }}
-                strokeDasharray="5 5"
-                name="Average Per Transaction"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {/* Detailed Daily Table */}
-      <div className="table-container">
-        <h3>Daily Spending Details</h3>
-        <table className="spending-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Total Spending</th>
-              <th>Transactions</th>
-              <th>Average Per Transaction</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dailyStats.map((day) => (
-              <tr key={day.date}>
-                <td>{day.date}</td>
-                <td className="amount">${day.amount.toFixed(2)}</td>
-                <td className="count">{day.count}</td>
-                <td className="amount">${day.average.toFixed(2)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </div>
 
-      <style jsx>{`
-        .spending-by-day-analysis {
-          padding: 20px;
-          background-color: #f9f9f9;
-          border-radius: 8px;
-        }
+      {/* Daily Breakdown */}
+      <div className="space-y-3">
+        {dailySpending.map((day) => (
+          <div
+            key={day.date}
+            className={`p-4 rounded-lg transition-all hover:shadow-md ${getSpendingColor(
+              day.amount,
+              maxSpendingDay.amount
+            )}`}
+          >
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <p className="font-semibold text-gray-800">{day.day}</p>
+                <p className="text-xs text-gray-600">{day.transactionCount} transaction(s)</p>
+              </div>
+              <p className="text-lg font-bold text-gray-800">
+                {currency}{day.amount.toFixed(2)}
+              </p>
+            </div>
 
-        .spending-by-day-analysis h2 {
-          margin-top: 0;
-          color: #333;
-          border-bottom: 2px solid #8884d8;
-          padding-bottom: 10px;
-        }
+            {/* Category Breakdown */}
+            {Object.keys(day.categoryBreakdown).length > 0 && (
+              <div className="mt-3 pt-3 border-t border-gray-300 border-opacity-50">
+                <p className="text-xs font-semibold text-gray-600 mb-2">Categories:</p>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(day.categoryBreakdown).map(([category, amount]) => (
+                    <span
+                      key={category}
+                      className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-white bg-opacity-50 text-gray-700"
+                    >
+                      {category}: {currency}{(amount as number).toFixed(2)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
 
-        .spending-by-day-analysis h3 {
-          color: #555;
-          margin-top: 30px;
-          margin-bottom: 15px;
-        }
-
-        .no-data {
-          color: #999;
-          font-style: italic;
-          padding: 20px;
-          text-align: center;
-        }
-
-        .stats-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 15px;
-          margin: 20px 0;
-        }
-
-        .stat-card {
-          background: white;
-          padding: 15px;
-          border-radius: 6px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          border-left: 4px solid #8884d8;
-        }
-
-        .stat-card h3 {
-          margin: 0 0 10px 0;
-          font-size: 14px;
-          color: #666;
-          font-weight: 600;
-        }
-
-        .stat-value {
-          margin: 0;
-          font-size: 24px;
-          font-weight: bold;
-          color: #333;
-        }
-
-        .stat-detail {
-          margin: 5px 0 0 0;
-          font-size: 12px;
-          color: #999;
-        }
-
-        .stat-card.highlight-high {
-          border-left-color: #ff7c7c;
-        }
-
-        .stat-card.highlight-low {
-          border-left-color: #82ca9d;
-        }
-
-        .chart-container {
-          background: white;
-          padding: 20px;
-          border-radius: 6px;
-          margin: 20px 0;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .table-container {
-          background: white;
-          padding: 20px;
-          border-radius: 6px;
-          margin: 20px 0;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          overflow-x: auto;
-        }
-
-        .spending-table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-
-        .spending-table thead {
-          background-color: #f0f0f0;
-        }
-
-        .spending-table th {
-          padding: 12px;
-          text-align: left;
-          font-weight: 600;
-          color: #555;
-          border-bottom: 2px solid #ddd;
-        }
-
-        .spending-table td {
-          padding: 12px;
-          border-bottom: 1px solid #eee;
-          color: #666;
-        }
-
-        .spending-table tbody tr:hover {
-          background-color: #f9f9f9;
-        }
-
-        .spending-table td.amount {
-          text-align: right;
-          font-weight: 500;
-          color: #333;
-        }
-
-        .spending-table td.count {
-          text-align: center;
-          color: #666;
-        }
-      `}</style>
-    </div>
+      {/* Progress Indicator */}
+      <div className="mt-6 pt-6 border-t border-gray-200">
+        <p className="text-xs text-gray-500 text-center">
+          Analyzed {dailySpending.length} day(s) with {transactions.length} transaction(s)
+        </p>
+      </div>
+    </Card>
   );
 };
 
