@@ -93,12 +93,13 @@ export function GroupMembersCard({
       {isExpanded ? (
         <>
           <ChevronUp className="h-4 w-4" />
-          Show less
+          Collapse list
         </>
       ) : (
         <>
           <ChevronDown className="h-4 w-4" />
-          Show {hiddenCount} more {hiddenCount === 1 ? 'member' : 'members'}
+          Show all
+          // Show {hiddenCount} more {hiddenCount === 1 ? 'member' : 'members'} //
         </>
       )}
     </button>
