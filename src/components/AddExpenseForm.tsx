@@ -49,12 +49,14 @@ export function AddExpenseForm({ onAdd, groupMembers, currency }: AddExpenseForm
       return;
     }
 
-    if (!paidBy.trim()) {
-      toast.error('Please select or enter who paid');
+    // Only require paidBy for individual payments
+    if (paymentSource === 'individual' && !paidBy.trim()) {
+      toast.error('Please select who paid');
       return;
     }
 
-    onAdd(parsedAmount, description.trim(), category, paidBy.trim(), paymentSource);
+    const payer = paymentSource === 'pool' ? 'Pool' : paidBy.trim();
+    onAdd(parsedAmount, description.trim(), category, payer, paymentSource);
     toast.success('Expense added successfully!');
     
     // Reset form
@@ -155,31 +157,33 @@ export function AddExpenseForm({ onAdd, groupMembers, currency }: AddExpenseForm
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="paidBy" className="text-sm">Paid by</Label>
-            {groupMembers.length > 0 ? (
-              <Select value={paidBy} onValueChange={setPaidBy}>
-                <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Select who paid" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  {groupMembers.map((member) => (
-                    <SelectItem key={member} value={member} className="py-3">
-                      {member}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input
-                id="paidBy"
-                placeholder="Who paid for this?"
-                value={paidBy}
-                onChange={(e) => setPaidBy(e.target.value)}
-                className="h-12 text-base"
-              />
-            )}
-          </div>
+          {paymentSource === 'individual' && (
+            <div className="space-y-2">
+              <Label htmlFor="paidBy" className="text-sm">Paid by</Label>
+              {groupMembers.length > 0 ? (
+                <Select value={paidBy} onValueChange={setPaidBy}>
+                  <SelectTrigger className="h-12">
+                    <SelectValue placeholder="Select who paid" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover">
+                    {groupMembers.map((member) => (
+                      <SelectItem key={member} value={member} className="py-3">
+                        {member}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  id="paidBy"
+                  placeholder="Who paid for this?"
+                  value={paidBy}
+                  onChange={(e) => setPaidBy(e.target.value)}
+                  className="h-12 text-base"
+                />
+              )}
+            </div>
+          )}
 
           <Button type="submit" variant="gradient" className="w-full h-12 text-base">
             <Plus className="h-5 w-5" />
