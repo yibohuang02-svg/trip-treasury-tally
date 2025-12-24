@@ -66,7 +66,26 @@ export function GroupMembersCard({
   const visibleMembers = isExpanded ? members : members.slice(0, VISIBLE_MEMBERS_COUNT);
   const hiddenCount = members.length - VISIBLE_MEMBERS_COUNT;
 
-  const ToggleButton = () => (
+  const TopToggleButton = () => (
+    <button
+      onClick={() => setIsExpanded(!isExpanded)}
+      className="flex items-center gap-1 text-xs sm:text-sm text-primary hover:text-primary/80 transition-colors font-medium touch-target-sm"
+    >
+      {isExpanded ? (
+        <>
+          <ChevronUp className="h-4 w-4" />
+          Collapse list
+        </>
+      ) : (
+        <>
+          <ChevronDown className="h-4 w-4" />
+          Show all
+        </>
+      )}
+    </button>
+  );
+
+  const BottomToggleButton = () => (
     <button
       onClick={() => setIsExpanded(!isExpanded)}
       className="w-full flex items-center justify-center gap-1.5 py-2 text-xs sm:text-sm text-primary hover:text-primary/80 transition-colors font-medium touch-target-sm"
@@ -87,16 +106,19 @@ export function GroupMembersCard({
 
   return (
     <div className="rounded-2xl bg-card p-4 sm:p-5 shadow-soft animate-fade-in">
-      <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-        <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-primary/10">
-          <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+      <div className="flex items-center justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-primary/10">
+            <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-display font-semibold text-card-foreground text-sm sm:text-base">Group Members</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              {members.length} {members.length === 1 ? 'person' : 'people'} in this trip
+            </p>
+          </div>
         </div>
-        <div>
-          <h3 className="font-display font-semibold text-card-foreground text-sm sm:text-base">Group Members</h3>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            {members.length} {members.length === 1 ? 'person' : 'people'} in this trip
-          </p>
-        </div>
+        {hasMoreMembers && <TopToggleButton />}
       </div>
 
       <div className="flex gap-2 mb-3 sm:mb-4">
@@ -118,8 +140,6 @@ export function GroupMembersCard({
         </p>
       ) : (
         <div className="space-y-2">
-          {hasMoreMembers && <ToggleButton />}
-          
           {visibleMembers.map((member) => {
             const owedAmount = memberBalances[member] || 0;
             const hasOwed = owedAmount > 0;
@@ -181,7 +201,7 @@ export function GroupMembersCard({
             );
           })}
           
-          {hasMoreMembers && <ToggleButton />}
+          {hasMoreMembers && <BottomToggleButton />}
         </div>
       )}
     </div>
