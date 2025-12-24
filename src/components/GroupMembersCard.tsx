@@ -99,7 +99,7 @@ export function GroupMembersCard({
         <>
           <ChevronDown className="h-4 w-4" />
           Show all
-          // Show {hiddenCount} more {hiddenCount === 1 ? 'member' : 'members'} //
+          /* {/* Show {hiddenCount} more {hiddenCount === 1 ? 'member' : 'members'} */} */
         </>
       )}
     </button>
