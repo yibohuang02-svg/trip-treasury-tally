@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Wallet, Plus } from 'lucide-react';
+import { Wallet, Plus, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -10,13 +11,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { getCurrencySymbol, CurrencyCode } from '@/types/expense';
 import { toast } from 'sonner';
 
@@ -32,9 +26,12 @@ const quickAmounts = [50, 200, 500, 1000];
 export function TopUpDialog({ onTopUp, currentBalance, currency, groupMembers }: TopUpDialogProps) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState('');
-  const [addedBy, setAddedBy] = useState('');
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [note, setNote] = useState('');
   const symbol = getCurrencySymbol(currency);
+
+  const allSelected = groupMembers.length > 0 && selectedMembers.length === groupMembers.length;
+  const totalAmount = parseFloat(amount || '0') * selectedMembers.length;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,21 +42,42 @@ export function TopUpDialog({ onTopUp, currentBalance, currency, groupMembers }:
       return;
     }
 
-    if (!addedBy.trim()) {
-      toast.error('Please select who added the funds');
+    if (selectedMembers.length === 0) {
+      toast.error('Please select at least one member');
       return;
     }
 
-    onTopUp(parsedAmount, addedBy.trim(), note.trim() || undefined);
-    toast.success(`Added ${symbol}${parsedAmount.toFixed(2)} to the fund!`);
+    // Create a top-up record for each selected member
+    selectedMembers.forEach((member) => {
+      onTopUp(parsedAmount, member, note.trim() || undefined);
+    });
+
+    const total = parsedAmount * selectedMembers.length;
+    toast.success(`Added ${symbol}${total.toFixed(2)} to the fund from ${selectedMembers.length} member${selectedMembers.length > 1 ? 's' : ''}!`);
     setAmount('');
-    setAddedBy('');
+    setSelectedMembers([]);
     setNote('');
     setOpen(false);
   };
 
   const handleQuickAmount = (quickAmount: number) => {
     setAmount(quickAmount.toString());
+  };
+
+  const handleMemberToggle = (member: string) => {
+    setSelectedMembers((prev) =>
+      prev.includes(member)
+        ? prev.filter((m) => m !== member)
+        : [...prev, member]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (allSelected) {
+      setSelectedMembers([]);
+    } else {
+      setSelectedMembers([...groupMembers]);
+    }
   };
 
   return (
@@ -84,7 +102,7 @@ export function TopUpDialog({ onTopUp, currentBalance, currency, groupMembers }:
 
         <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 mt-3 sm:mt-4">
           <div className="space-y-2">
-            <Label htmlFor="topup-amount" className="text-sm">Amount to add ({symbol})</Label>
+            <Label htmlFor="topup-amount" className="text-sm">Amount per person ({symbol})</Label>
             <Input
               id="topup-amount"
               type="number"
@@ -116,23 +134,43 @@ export function TopUpDialog({ onTopUp, currentBalance, currency, groupMembers }:
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="added-by" className="text-sm">Added by</Label>
-            <Select value={addedBy} onValueChange={setAddedBy}>
-              <SelectTrigger className="h-12">
-                <SelectValue placeholder="Select who added the funds" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover">
-                {groupMembers.length > 0 ? (
-                  groupMembers.map((member) => (
-                    <SelectItem key={member} value={member} className="py-3">
-                      {member}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="unknown" className="py-3">Unknown</SelectItem>
-                )}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm">Select members</Label>
+              {groupMembers.length > 1 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSelectAll}
+                  className="h-8 text-xs text-primary hover:text-primary/80"
+                >
+                  {allSelected ? 'Deselect All' : 'Select All'}
+                </Button>
+              )}
+            </div>
+            <div className="space-y-2 max-h-40 overflow-y-auto rounded-lg border border-border p-2">
+              {groupMembers.length > 0 ? (
+                groupMembers.map((member) => (
+                  <label
+                    key={member}
+                    className="flex items-center gap-3 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
+                  >
+                    <Checkbox
+                      checked={selectedMembers.includes(member)}
+                      onCheckedChange={() => handleMemberToggle(member)}
+                    />
+                    <span className="text-sm">{member}</span>
+                  </label>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground p-2">No members added yet</p>
+              )}
+            </div>
+            {selectedMembers.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {selectedMembers.length} member{selectedMembers.length > 1 ? 's' : ''} selected
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -145,6 +183,18 @@ export function TopUpDialog({ onTopUp, currentBalance, currency, groupMembers }:
               className="h-12 text-base"
             />
           </div>
+
+          {selectedMembers.length > 0 && parseFloat(amount) > 0 && (
+            <div className="rounded-xl bg-success/10 border border-success/20 p-3 sm:p-4">
+              <div className="text-xs sm:text-sm text-success">Total to add</div>
+              <div className="font-display text-xl sm:text-2xl font-bold text-success">
+                {symbol}{totalAmount.toFixed(2)}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {symbol}{parseFloat(amount).toFixed(2)} × {selectedMembers.length} member{selectedMembers.length > 1 ? 's' : ''}
+              </div>
+            </div>
+          )}
 
           <Button type="submit" variant="success" className="w-full h-12 text-base">
             <Plus className="h-5 w-5" />
