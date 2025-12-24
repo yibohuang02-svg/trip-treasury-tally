@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Plus, X, Check, MoreVertical } from 'lucide-react';
+import { Users, Plus, X, Check, MoreVertical, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { getCurrencySymbol, CurrencyCode } from '@/types/expense';
@@ -20,6 +20,8 @@ interface GroupMembersCardProps {
   onReimburseMember: (name: string) => void;
 }
 
+const VISIBLE_MEMBERS_COUNT = 3;
+
 export function GroupMembersCard({ 
   members, 
   memberBalances, 
@@ -29,6 +31,7 @@ export function GroupMembersCard({
   onReimburseMember,
 }: GroupMembersCardProps) {
   const [newMember, setNewMember] = useState('');
+  const [isExpanded, setIsExpanded] = useState(false);
   const symbol = getCurrencySymbol(currency);
 
   const handleAdd = () => {
@@ -58,6 +61,29 @@ export function GroupMembersCard({
     onReimburseMember(member);
     toast.success(`Reimbursed ${symbol}${amount.toFixed(2)} to ${member}`);
   };
+
+  const hasMoreMembers = members.length > VISIBLE_MEMBERS_COUNT;
+  const visibleMembers = isExpanded ? members : members.slice(0, VISIBLE_MEMBERS_COUNT);
+  const hiddenCount = members.length - VISIBLE_MEMBERS_COUNT;
+
+  const ToggleButton = () => (
+    <button
+      onClick={() => setIsExpanded(!isExpanded)}
+      className="w-full flex items-center justify-center gap-1.5 py-2 text-xs sm:text-sm text-primary hover:text-primary/80 transition-colors font-medium touch-target-sm"
+    >
+      {isExpanded ? (
+        <>
+          <ChevronUp className="h-4 w-4" />
+          Show less
+        </>
+      ) : (
+        <>
+          <ChevronDown className="h-4 w-4" />
+          Show {hiddenCount} more {hiddenCount === 1 ? 'member' : 'members'}
+        </>
+      )}
+    </button>
+  );
 
   return (
     <div className="rounded-2xl bg-card p-4 sm:p-5 shadow-soft animate-fade-in">
@@ -92,7 +118,9 @@ export function GroupMembersCard({
         </p>
       ) : (
         <div className="space-y-2">
-          {members.map((member) => {
+          {hasMoreMembers && <ToggleButton />}
+          
+          {visibleMembers.map((member) => {
             const owedAmount = memberBalances[member] || 0;
             const hasOwed = owedAmount > 0;
 
@@ -152,6 +180,8 @@ export function GroupMembersCard({
               </div>
             );
           })}
+          
+          {hasMoreMembers && <ToggleButton />}
         </div>
       )}
     </div>
