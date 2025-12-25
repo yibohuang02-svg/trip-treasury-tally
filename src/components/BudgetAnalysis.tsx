@@ -312,14 +312,14 @@ export function BudgetAnalysis({
                     <>
                       <CheckCircle className="h-4 w-4 text-success" />
                       <span className="text-sm">
-                        You're <span className="font-semibold text-success">{symbol}{Math.abs(analysis.budgetVariance).toFixed(2)}</span> under expected spending
+                        You're <span className="font-semibold text-success">{symbol}{Math.abs(analysis.budgetVariance).toFixed(2)}</span> under expected daily spend
                       </span>
                     </>
                   ) : (
                     <>
                       <AlertTriangle className="h-4 w-4 text-destructive" />
                       <span className="text-sm">
-                        You're <span className="font-semibold text-destructive">{symbol}{Math.abs(analysis.budgetVariance).toFixed(2)}</span> over expected spending
+                        You're <span className="font-semibold text-destructive">{symbol}{Math.abs(analysis.budgetVariance).toFixed(2)}</span> over expected daily spend
                       </span>
                     </>
                   )}
