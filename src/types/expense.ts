@@ -57,6 +57,9 @@ export interface TravelFund {
   topUps: TopUp[];
   groupMembers: string[];
   currency: CurrencyCode;
+  tripStartDate?: string;
+  tripDuration?: number;
+  totalBudget?: number;
 }
 
 export const categoryConfig: Record<ExpenseCategory, { label: string; icon: string; color: string }> = {

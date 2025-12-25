@@ -7,6 +7,7 @@ import { TopUpDialog } from '@/components/TopUpDialog';
 import { TopUpHistory } from '@/components/TopUpHistory';
 import { SettingsDialog } from '@/components/SettingsDialog';
 import { GroupMembersCard } from '@/components/GroupMembersCard';
+import { BudgetAnalysis } from '@/components/BudgetAnalysis';
 import { getCurrencySymbol } from '@/types/expense';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -31,6 +32,7 @@ const Index = () => {
     removeGroupMember,
     setCurrency,
     resetFund,
+    setTripSettings,
   } = useTravelFund();
 
   const symbol = getCurrencySymbol(fund.currency);
@@ -141,6 +143,9 @@ const Index = () => {
                 <TabsTrigger value="topups" className="flex-1 text-xs sm:text-sm h-9 sm:h-8">
                   Top-ups ({fund.topUps.length})
                 </TabsTrigger>
+                <TabsTrigger value="analysis" className="flex-1 text-xs sm:text-sm h-9 sm:h-8">
+                  Analysis
+                </TabsTrigger>
               </TabsList>
               
               <TabsContent value="expenses">
@@ -156,6 +161,17 @@ const Index = () => {
                 <TopUpHistory 
                   topUps={fund.topUps}
                   currency={fund.currency}
+                />
+              </TabsContent>
+
+              <TabsContent value="analysis">
+                <BudgetAnalysis
+                  expenses={fund.expenses}
+                  currency={fund.currency}
+                  tripStartDate={fund.tripStartDate}
+                  tripDuration={fund.tripDuration}
+                  totalBudget={fund.totalBudget}
+                  onSetTripSettings={setTripSettings}
                 />
               </TabsContent>
             </Tabs>
