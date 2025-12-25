@@ -12,6 +12,9 @@ const defaultFund: TravelFund = {
   topUps: [],
   groupMembers: [],
   currency: 'USD',
+  tripStartDate: undefined,
+  tripDuration: undefined,
+  totalBudget: undefined,
 };
 
 export function useTravelFund() {
@@ -23,6 +26,9 @@ export function useTravelFund() {
         ...parsed,
         groupMembers: parsed.groupMembers || [],
         currency: parsed.currency || 'USD',
+        tripStartDate: parsed.tripStartDate,
+        tripDuration: parsed.tripDuration,
+        totalBudget: parsed.totalBudget,
         topUps: (parsed.topUps || []).map((t: any) => ({
           ...t,
           date: new Date(t.date),
@@ -159,6 +165,15 @@ export function useTravelFund() {
     setFund(defaultFund);
   }, []);
 
+  const setTripSettings = useCallback((startDate: string, duration: number, budget: number) => {
+    setFund((prev) => ({
+      ...prev,
+      tripStartDate: startDate,
+      tripDuration: duration,
+      totalBudget: budget,
+    }));
+  }, []);
+
   // Calculate amount owed to each member
   const memberBalances = fund.groupMembers.reduce((acc, member) => {
     const owedAmount = fund.expenses
@@ -185,5 +200,6 @@ export function useTravelFund() {
     removeGroupMember,
     setCurrency,
     resetFund,
+    setTripSettings,
   };
 }

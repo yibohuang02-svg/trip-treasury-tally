@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import Card from './Card';
+import { Card } from '@/components/ui/card';
 
 interface DailySpending {
   date: string;
