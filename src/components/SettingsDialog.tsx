@@ -1,15 +1,8 @@
 import { useState } from 'react';
-import { Settings, AlertTriangle, RotateCcw, Globe } from 'lucide-react';
+import { Settings, AlertTriangle, RotateCcw, Globe, Check, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -28,8 +21,22 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { CurrencyCode, currencies, getCurrencySymbol } from '@/types/expense';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface SettingsDialogProps {
   threshold: number;
@@ -41,6 +48,7 @@ interface SettingsDialogProps {
 
 export function SettingsDialog({ threshold, currency, onSetThreshold, onSetCurrency, onReset }: SettingsDialogProps) {
   const [open, setOpen] = useState(false);
+  const [currencyOpen, setCurrencyOpen] = useState(false);
   const [newThreshold, setNewThreshold] = useState(threshold.toString());
 
   const handleSave = () => {
@@ -62,10 +70,12 @@ export function SettingsDialog({ threshold, currency, onSetThreshold, onSetCurre
 
   const handleCurrencyChange = (value: CurrencyCode) => {
     onSetCurrency(value);
+    setCurrencyOpen(false);
     toast.success(`Currency changed to ${value}`);
   };
 
   const currencySymbol = getCurrencySymbol(currency);
+  const selectedCurrency = currencies.find((c) => c.code === currency);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -85,22 +95,57 @@ export function SettingsDialog({ threshold, currency, onSetThreshold, onSetCurre
               <Globe className="h-4 w-4 text-primary" />
               Currency
             </Label>
-            <Select value={currency} onValueChange={(v) => handleCurrencyChange(v as CurrencyCode)}>
-              <SelectTrigger className="h-12">
-                <SelectValue placeholder="Select currency" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover max-h-[40vh]">
-                {currencies.map((c) => (
-                  <SelectItem key={c.code} value={c.code} className="py-3">
+            <Popover open={currencyOpen} onOpenChange={setCurrencyOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={currencyOpen}
+                  className="w-full h-12 justify-between"
+                >
+                  {selectedCurrency ? (
                     <span className="flex items-center gap-2">
-                      <span className="font-medium">{c.symbol}</span>
-                      <span>{c.name}</span>
-                      <span className="text-muted-foreground text-xs">({c.code})</span>
+                      <span className="font-medium">{selectedCurrency.symbol}</span>
+                      <span>{selectedCurrency.name}</span>
+                      <span className="text-muted-foreground text-xs">({selectedCurrency.code})</span>
                     </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  ) : (
+                    "Select currency..."
+                  )}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0 bg-popover z-50" align="start">
+                <Command>
+                  <CommandInput placeholder="Search currency..." />
+                  <CommandList>
+                    <CommandEmpty>No currency found.</CommandEmpty>
+                    <CommandGroup>
+                      {currencies.map((c) => (
+                        <CommandItem
+                          key={c.code}
+                          value={`${c.name} ${c.code} ${c.symbol}`}
+                          onSelect={() => handleCurrencyChange(c.code)}
+                          className="py-3"
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              currency === c.code ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          <span className="flex items-center gap-2">
+                            <span className="font-medium">{c.symbol}</span>
+                            <span>{c.name}</span>
+                            <span className="text-muted-foreground text-xs">({c.code})</span>
+                          </span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="space-y-2 sm:space-y-3">
