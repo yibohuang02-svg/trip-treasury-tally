@@ -49,14 +49,10 @@ export function useTravelFund() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(fund));
   }, [fund]);
 
-  // Only count pool expenses and reimbursed individual expenses
-  const spentFromPool = fund.expenses.reduce((sum, e) => {
-    if (e.paymentSource === 'pool') return sum + e.amount;
-    if (e.paymentSource === 'individual' && e.isReimbursed) return sum + e.amount;
-    return sum;
-  }, 0);
+  // Calculate total of all expenses regardless of reimbursement status
+  const totalExpenses = fund.expenses.reduce((sum, e) => sum + e.amount, 0);
 
-  const currentBalance = fund.totalBalance - spentFromPool;
+  const currentBalance = fund.totalBalance - totalExpenses;
   const isLowBalance = currentBalance <= fund.lowBalanceThreshold;
   const totalSpent = fund.expenses.reduce((sum, e) => sum + e.amount, 0);
 
