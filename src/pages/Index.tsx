@@ -1,5 +1,8 @@
-import { Plane, Download } from 'lucide-react';
-import { useTravelFund } from '@/hooks/useTravelFund';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Plane, Download, LogOut } from 'lucide-react';
+import { useTravelFundDb } from '@/hooks/useTravelFundDb';
+import { useAuth } from '@/hooks/useAuth';
 import { BalanceCard } from '@/components/BalanceCard';
 import { ExpenseList } from '@/components/ExpenseList';
 import { AddExpenseForm } from '@/components/AddExpenseForm';
@@ -13,8 +16,11 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { exportToExcel } from '@/lib/exportToExcel';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Index = () => {
+  const navigate = useNavigate();
+  const { user, isLoading: authLoading, signOut } = useAuth();
   const {
     fund,
     currentBalance,
@@ -22,6 +28,7 @@ const Index = () => {
     totalSpent,
     pendingReimbursements,
     memberBalances,
+    isLoading: dataLoading,
     addExpense,
     removeExpense,
     reimburseExpense,
@@ -33,7 +40,13 @@ const Index = () => {
     setCurrency,
     resetFund,
     setTripSettings,
-  } = useTravelFund();
+  } = useTravelFundDb();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/auth', { replace: true });
+    }
+  }, [user, authLoading, navigate]);
 
   const symbol = getCurrencySymbol(fund.currency);
 
@@ -47,6 +60,46 @@ const Index = () => {
     });
     toast.success('Excel file downloaded!');
   };
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success('Signed out successfully');
+  };
+
+  if (authLoading || dataLoading) {
+    return (
+      <div className="min-h-screen gradient-sunset">
+        <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-lg safe-area-top">
+          <div className="container flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl gradient-warm shadow-soft">
+                <Plane className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="font-display text-base sm:text-lg font-bold text-foreground">TravelFund</h1>
+                <p className="text-[10px] sm:text-xs text-muted-foreground hidden xs:block">Group expense tracker</p>
+              </div>
+            </div>
+          </div>
+        </header>
+        <main className="container px-3 sm:px-4 py-4 sm:py-6">
+          <div className="mx-auto max-w-2xl space-y-4 sm:space-y-6">
+            <Skeleton className="h-40 w-full rounded-2xl" />
+            <Skeleton className="h-32 w-full rounded-xl" />
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <Skeleton className="h-12 w-full rounded-xl" />
+              <Skeleton className="h-12 w-full rounded-xl" />
+            </div>
+            <Skeleton className="h-64 w-full rounded-xl" />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen gradient-sunset">
@@ -79,6 +132,15 @@ const Index = () => {
               onSetCurrency={setCurrency}
               onReset={resetFund}
             />
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={handleSignOut}
+              title="Sign out"
+              className="h-10 w-10 sm:h-10 sm:w-10"
+            >
+              <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
+            </Button>
           </div>
         </div>
       </header>
