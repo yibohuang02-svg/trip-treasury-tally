@@ -1,7 +1,6 @@
-import { useEffect } from 'react';
+import { Plane, Download, LogOut, LogIn, Cloud, CloudOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Plane, Download, LogOut } from 'lucide-react';
-import { useTravelFundDb } from '@/hooks/useTravelFundDb';
+import { useTravelFundHybrid } from '@/hooks/useTravelFundHybrid';
 import { useAuth } from '@/hooks/useAuth';
 import { BalanceCard } from '@/components/BalanceCard';
 import { ExpenseList } from '@/components/ExpenseList';
@@ -17,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { exportToExcel } from '@/lib/exportToExcel';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -29,6 +29,7 @@ const Index = () => {
     pendingReimbursements,
     memberBalances,
     isLoading: dataLoading,
+    isCloudMode,
     addExpense,
     removeExpense,
     reimburseExpense,
@@ -40,13 +41,7 @@ const Index = () => {
     setCurrency,
     resetFund,
     setTripSettings,
-  } = useTravelFundDb();
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth', { replace: true });
-    }
-  }, [user, authLoading, navigate]);
+  } = useTravelFundHybrid();
 
   const symbol = getCurrencySymbol(fund.currency);
 
@@ -64,6 +59,10 @@ const Index = () => {
   const handleSignOut = async () => {
     await signOut();
     toast.success('Signed out successfully');
+  };
+
+  const handleSignIn = () => {
+    navigate('/auth');
   };
 
   if (authLoading || dataLoading) {
@@ -97,10 +96,6 @@ const Index = () => {
     );
   }
 
-  if (!user) {
-    return null;
-  }
-
   return (
     <div className="min-h-screen gradient-sunset">
       {/* Header */}
@@ -116,6 +111,29 @@ const Index = () => {
             </div>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Cloud status indicator */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs ${
+                  isCloudMode 
+                    ? 'bg-primary/10 text-primary' 
+                    : 'bg-muted text-muted-foreground'
+                }`}>
+                  {isCloudMode ? (
+                    <Cloud className="h-3.5 w-3.5" />
+                  ) : (
+                    <CloudOff className="h-3.5 w-3.5" />
+                  )}
+                  <span className="hidden sm:inline">{isCloudMode ? 'Synced' : 'Local'}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isCloudMode 
+                  ? 'Your data is saved to the cloud' 
+                  : 'Data is stored locally on this device'}
+              </TooltipContent>
+            </Tooltip>
+
             <Button 
               variant="outline" 
               size="icon"
@@ -132,18 +150,52 @@ const Index = () => {
               onSetCurrency={setCurrency}
               onReset={resetFund}
             />
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={handleSignOut}
-              title="Sign out"
-              className="h-10 w-10 sm:h-10 sm:w-10"
-            >
-              <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
+            {user ? (
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={handleSignOut}
+                title="Sign out"
+                className="h-10 w-10 sm:h-10 sm:w-10"
+              >
+                <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Button>
+            ) : (
+              <Button 
+                variant="default" 
+                size="sm"
+                onClick={handleSignIn}
+                className="h-10 gap-1.5"
+              >
+                <LogIn className="h-4 w-4" />
+                <span className="hidden sm:inline">Sign in</span>
+              </Button>
+            )}
           </div>
         </div>
       </header>
+
+      {/* Guest mode banner */}
+      {!user && (
+        <div className="bg-primary/5 border-b border-primary/10">
+          <div className="container px-3 sm:px-4 py-2">
+            <div className="mx-auto max-w-2xl flex items-center justify-between gap-2">
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">Guest mode:</span> Data is saved locally.{' '}
+                <span className="hidden sm:inline">Sign in to sync across devices.</span>
+              </p>
+              <Button 
+                variant="link" 
+                size="sm" 
+                onClick={handleSignIn}
+                className="text-primary h-auto p-0"
+              >
+                Create account
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="container px-3 sm:px-4 py-4 sm:py-6 pb-20 sm:pb-24">
