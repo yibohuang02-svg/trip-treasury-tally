@@ -106,6 +106,10 @@ const Auth = () => {
     }
   };
 
+  const handleContinueAsGuest = () => {
+    navigate('/', { replace: true });
+  };
+
   return (
     <div className="min-h-screen gradient-sunset flex items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-elegant animate-fade-in">
@@ -214,6 +218,26 @@ const Auth = () => {
               </form>
             </TabsContent>
           </Tabs>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">or</span>
+            </div>
+          </div>
+
+          <Button 
+            variant="outline" 
+            className="w-full" 
+            onClick={handleContinueAsGuest}
+          >
+            Continue as Guest
+          </Button>
+          <p className="text-xs text-center text-muted-foreground mt-2">
+            Your data will be stored locally on this device
+          </p>
         </CardContent>
       </Card>
     </div>
