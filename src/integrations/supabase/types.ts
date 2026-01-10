@@ -110,6 +110,47 @@ export type Database = {
         }
         Relationships: []
       }
+      travel_fund_members: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          id: string
+          invited_at: string
+          invited_email: string | null
+          role: string
+          travel_fund_id: string
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          id?: string
+          invited_at?: string
+          invited_email?: string | null
+          role?: string
+          travel_fund_id: string
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          id?: string
+          invited_at?: string
+          invited_email?: string | null
+          role?: string
+          travel_fund_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "travel_fund_members_travel_fund_id_fkey"
+            columns: ["travel_fund_id"]
+            isOneToOne: false
+            referencedRelation: "travel_funds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       travel_funds: {
         Row: {
           created_at: string
@@ -157,7 +198,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_travel_fund_access: {
+        Args: { _fund_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_travel_fund_owner: {
+        Args: { _fund_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

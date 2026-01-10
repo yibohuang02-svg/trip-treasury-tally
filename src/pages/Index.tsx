@@ -2,6 +2,7 @@ import { Plane, Download, LogOut, LogIn, Cloud, CloudOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTravelFundHybrid } from '@/hooks/useTravelFundHybrid';
 import { useAuth } from '@/hooks/useAuth';
+import { useSharing } from '@/hooks/useSharing';
 import { BalanceCard } from '@/components/BalanceCard';
 import { ExpenseList } from '@/components/ExpenseList';
 import { AddExpenseForm } from '@/components/AddExpenseForm';
@@ -10,6 +11,8 @@ import { TopUpHistory } from '@/components/TopUpHistory';
 import { SettingsDialog } from '@/components/SettingsDialog';
 import { GroupMembersCard } from '@/components/GroupMembersCard';
 import { BudgetAnalysis } from '@/components/BudgetAnalysis';
+import { ShareFundDialog } from '@/components/ShareFundDialog';
+import { SharedFundInvites } from '@/components/SharedFundInvites';
 import { getCurrencySymbol } from '@/types/expense';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -23,6 +26,7 @@ const Index = () => {
   const { user, isLoading: authLoading, signOut } = useAuth();
   const {
     fund,
+    fundId,
     currentBalance,
     isLowBalance,
     totalSpent,
@@ -42,6 +46,16 @@ const Index = () => {
     resetFund,
     setTripSettings,
   } = useTravelFundHybrid();
+
+  const {
+    members: sharedMembers,
+    pendingInvites,
+    isOwner,
+    inviteMember,
+    removeMember,
+    acceptInvite,
+    declineInvite,
+  } = useSharing(fundId);
 
   const symbol = getCurrencySymbol(fund.currency);
 
@@ -143,6 +157,14 @@ const Index = () => {
             >
               <Download className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
+            {isCloudMode && user && (
+              <ShareFundDialog
+                members={sharedMembers}
+                isOwner={isOwner}
+                onInviteMember={inviteMember}
+                onRemoveMember={removeMember}
+              />
+            )}
             <SettingsDialog 
               threshold={fund.lowBalanceThreshold}
               currency={fund.currency}
@@ -200,6 +222,15 @@ const Index = () => {
       {/* Main Content */}
       <main className="container px-3 sm:px-4 py-4 sm:py-6 pb-20 sm:pb-24">
         <div className="mx-auto max-w-2xl space-y-4 sm:space-y-6">
+          {/* Pending Invites */}
+          {isCloudMode && pendingInvites.length > 0 && (
+            <SharedFundInvites
+              invites={pendingInvites}
+              onAccept={acceptInvite}
+              onDecline={declineInvite}
+            />
+          )}
+
           {/* Balance Card */}
           <BalanceCard
             currentBalance={currentBalance}

@@ -60,6 +60,8 @@ export function useTravelFundHybrid() {
     }
   }, [isCloudMode]);
 
+  const [fundId, setFundId] = useState<string | null>(null);
+
   // Fetch data from database
   const fetchFromDb = useCallback(async () => {
     if (!user) return null;
@@ -72,6 +74,11 @@ export function useTravelFundHybrid() {
         .maybeSingle();
 
       if (fundError) throw fundError;
+
+      // Store the fund ID for sharing
+      if (fundData?.id) {
+        setFundId(fundData.id);
+      }
 
       const { data: expensesData, error: expensesError } = await supabase
         .from('expenses')
@@ -596,6 +603,7 @@ export function useTravelFundHybrid() {
 
   return {
     fund,
+    fundId,
     currentBalance,
     isLowBalance,
     totalSpent,
